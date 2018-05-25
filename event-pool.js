@@ -1,6 +1,4 @@
 
-import expect from 'expect';
-
 export class EventPod {
     constructor(event = null, callback = null, order = 0, initiator = null) {
         this.event;
