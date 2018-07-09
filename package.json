@@ -1,0 +1,39 @@
+{
+    "name": "js-utils",
+    "version": "1.0.0",
+    "description": "utility classes to solve  common problems/needs in the js app",
+    "main": "index.js",
+    "dependencies": {
+        "react": "^16.4.1",
+        "react-dom": "^16.4.1"
+    },
+    "devDependencies": {
+        "jest": "^23.3.0",
+        "react-scripts": "^1.1.4"
+    },
+    "scripts": {
+        "start": "react-scripts start",
+        "build": "react-scripts build",
+        "test": "react-scripts test --env=jsdom",
+        "test-report": "react-scripts test --env=jsdom --coverage",
+        "eject": "react-scripts eject"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/seesamjagan/js-utils.git"
+    },
+    "keywords": [
+        "js",
+        "utils",
+        "manager",
+        "controller",
+        "design",
+        "patterns"
+    ],
+    "author": "சாமி. ஜெகன் லங்கா [Jagan Langa S]",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/seesamjagan/js-utils/issues"
+    },
+    "homepage": "https://github.com/seesamjagan/js-utils#readme"
+}
