@@ -250,6 +250,17 @@ export class JSTaskManager {
         this.onChangeHandlers.forEach(onChange=>onChange(task));
     }
 
+    unwatchTask(task) {
+        // TODO :: 
+    }
+
+    discardOnChangeHandler(onChange) {
+        let index = this.onChangeHandlers.indexOf(onChange);
+        if(index >= 0) {
+            this.onChangeHandlers.splice(index, 1);
+        }
+    }
+
 }
 
 export default {

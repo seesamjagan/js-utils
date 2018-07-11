@@ -17,6 +17,10 @@ class TaskManagerView extends React.Component {
         });
     }
 
+    componentWillUnmount() {
+        this.manager.discardOnChangeHandler(this.onChange);
+    }
+
     render() {
         const { activeQueue } = this.state;
         return (<div>
