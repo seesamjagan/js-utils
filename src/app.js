@@ -1,5 +1,5 @@
 import React from 'react';
-import { Timer } from './demo/timer';
+import { TimerView } from './demo/timer';
 import { JSTaskManager } from './js-task-manager';
 
 class TaskManagerView extends React.Component {
@@ -38,9 +38,9 @@ export default class App extends React.Component {
     render() {
         return (<div>
             <h1>Its React !</h1>
-            <Timer />
-            <Timer />
-            <Timer />
+            <TimerView />
+            <TimerView />
+            <TimerView />
             <TaskManagerView />
         </div>)
     }

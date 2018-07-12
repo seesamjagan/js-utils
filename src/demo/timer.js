@@ -45,11 +45,12 @@ class TimerTask extends JSTask {
     update = () => {
         this.time += 1000;
         this.onUpdate && this.onUpdate(this);
+        //this.complete()
     }
 }
 
 
-export class Timer extends React.Component {
+export class TimerView extends React.Component {
 
     constructor(props) {
         super(props);
