@@ -10,6 +10,12 @@ const _taskid_ = Symbol('_taskid_');
  */
 export class JSTask {
 
+    static get COMPLETED () {return 'completed'; }
+    static get CANCELLED () {return 'cancelled'; }
+    static get RUNNING () { return 'running'; }
+    static get PAUSED () { return 'paused'; }
+    static get QUEUED () { return 'queued'; }
+
     constructor(name = null, {description = "" } = {}) {
 
         if (!name) {
@@ -133,19 +139,19 @@ export class JSTask {
     get status() {
         if(this.isFinished) {
             if(this.isCancelled) {
-                return 'cancelled';
+                return JSTask.CANCELLED;
             } else {
-                return 'completed';
+                return JSTask.COMPLETED;
             }
         } 
         if(this.isStarted) {
             if(this.isRunning) {
-                return 'running';
+                return JSTask.RUNNING;
             } else {
-                return 'paused';
+                return JSTask.PAUSED;
             }
         }
-        return 'queued';
+        return JSTask.QUEUED;
     }
 
     /**
@@ -156,7 +162,7 @@ export class JSTask {
     }
 
     /**
-     * start() is the method which will execuited when the task is initiated.
+     * onStart() is a lifecycle method which will execuited when the task is initiated.
      * all the task should overide this method. 
      * NOTE: user should NOT call this method. it will be called by the task runner.
      * 
@@ -168,7 +174,7 @@ export class JSTask {
 
     /**
      * if the task is cancellable,
-     * onCancel() method will be called when the user cancel the task.
+     * onCancel() is a lifecycle method will be called when the user cancel the task.
      * derived class should override this method.
      * all the "resource clean up" work should be done here!
      * @return {bool} should return true if the task is successfully cancelled or else it should return false.
@@ -178,7 +184,7 @@ export class JSTask {
     }
 
     /**
-     * onPause() method will be called when the user pause the task.
+     * onPause() is a lifecycle method will be called when the user pause the task.
      * derived class should override this method
      * all the "resource clean/free up" work should be done here!
      * @returns {bool} onPause() method should return true is the task is paused or else it should return false.
@@ -188,7 +194,7 @@ export class JSTask {
     }
 
     /**
-     * onResume() method will be called when the user resume a paused task.
+     * onResume() is a lifecycle method will be called when the user resume a paused task.
      * it has to be overriden by the derived class.
      * @return {bool} it should return true if the task is resumed. or else it should return false.
      */
@@ -297,6 +303,10 @@ export class JSTaskManager {
         this.notifyChange(task);
     }
 
+    /**
+     * 
+     * @param {JSTask} task 
+     */
     notifyChange(task=null) {
         if(task && this.taskChangeCallbackMap.hasOwnProperty(task.taskId)) {
             this.taskChangeCallbackMap[task.taskId](task);
@@ -305,6 +315,10 @@ export class JSTaskManager {
         this.onChangeHandlers.forEach(onChange=>onChange(task));
     }
 
+    /**
+     * 
+     * @param {function} onChange 
+     */
     discardOnChangeHandler(onChange) {
         let index = this.onChangeHandlers.indexOf(onChange);
         if(index >= 0) {

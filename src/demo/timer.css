@@ -1,0 +1,7 @@
+.timer-view {
+    display: inline-block;
+    border: solid 2px #CDCDCD;
+    margin: 10px;
+    padding: 10px;
+    min-width: 150px;
+}

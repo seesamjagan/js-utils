@@ -2,6 +2,8 @@ import React from 'react';
 import { TimerView } from './demo/timer';
 import { JSTaskManager } from './js-task-manager';
 
+import "./app.css";
+
 class TaskManagerView extends React.Component {
     constructor(props) {
         super(props);
@@ -23,7 +25,7 @@ class TaskManagerView extends React.Component {
 
     render() {
         const { activeQueue } = this.state;
-        return (<div>
+        return (<div className="task-manager-view">
             <div><span>Task Count: </span><span>{activeQueue.length}</span></div>
             <div>
                 {

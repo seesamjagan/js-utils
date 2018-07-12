@@ -1,6 +1,7 @@
 import React from 'react';
 import { JSTask, JSTaskManager } from './../js-task-manager';
 
+import "./timer.css";
 
 class TimerTask extends JSTask {
 
@@ -87,7 +88,7 @@ export class TimerView extends React.Component {
     render() {
         const { time } = this.state;
         const { isStarted, isRunning } = this.task;
-        return <div>
+        return <div className="timer-view">
             <div><label>Time: </label> <span>{parseInt(time/1000, 10)} Seconds</span></div>
             <div>
                 <button onClick={this.onStartStop}>{isStarted ? 'Stop' : 'Start'}</button>
