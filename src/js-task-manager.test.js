@@ -10,10 +10,8 @@ class MyTask extends JSTask {
 
     intervalID = 0;
 
-    start() {
-        let val = 'im not supposed to be printed';
-        console.log(val);
-        return val;
+    get isCancellable() {
+        return true;
     }
 
     onStart() {
@@ -64,7 +62,7 @@ beforeEach(() => {
 describe('JSTask should work as expect', () => {
 
     it('new JSTask() without task name should throw error', () => {
-        expect(()=>new JSTask()).toThrow('Error: Task should have a valid name');
+        expect(()=>new JSTask()).toThrow('Error: Task should have a name');
     });
 
     it('new JSTask().start() should throw error for onStart() override', ()=>{

@@ -1,23 +1,25 @@
 const _taskid_ = Symbol('_taskid_');
 
 /**
- * 1. all the task should override "start()" method
- * 2. all the task should call "onFinished(isCancelled=false)" method once the task is done!
- * 3. all the task should be headless (means NO UI needed for the user to interact with)
+ * 1. all the task should override "onStart()" method
+ * 2. all the task should call "complete()" method once the task is done!
+ * 3. all the task should be headless (means it should NOT have any UI logic / DOM manipulation)
+ * 4. all the task should override the method onCancel() if the task is cancellable
+ * 5. all the task should override the method onPause() and onResume() if the task can be pausable and resumable.
+ * 6. By default all the task is NOT cancellable. derievd class have to override the isCancellable() getter to override to return different value based on case-to-case time-to-time.
  */
 export class JSTask {
 
-    constructor(name = null, { isCancellable = false, description = "" } = {}) {
+    constructor(name = null, {description = "" } = {}) {
 
         if (!name) {
-            throw new Error('Error: Task should have a valid name');
+            throw new Error('Error: Task should have a name');
         }
 
         this[_taskid_] = Date.now();
 
         this.name = name;
         this.description = description;
-        this.isCancellable = isCancellable;
 
         this.isStarted = false;
         this.isRunning = false;
@@ -120,6 +122,8 @@ export class JSTask {
             },
             writable: false
         });
+
+        JSTaskManager.getInstance().watchTask(this);
     }
 
     get taskId() {
@@ -142,6 +146,13 @@ export class JSTask {
             }
         }
         return 'queued';
+    }
+
+    /**
+     * derived classes should override this getter to let the outside world know wethere it is cancellable or not.
+     */
+    get isCancellable() {
+        return false;
     }
 
     /**
@@ -188,7 +199,14 @@ export class JSTask {
 
 let jsTaskRunnerInstance = null;
 
+// holder to store all the task.
+const taskList = [];
+
 export class JSTaskManager {
+
+    static getInstance() {
+        return jsTaskRunnerInstance || new JSTaskManager();
+    }
 
     constructor(onChange=null) {
         if (jsTaskRunnerInstance) {
@@ -200,8 +218,7 @@ export class JSTaskManager {
             return jsTaskRunnerInstance;
         }
         jsTaskRunnerInstance = this;
-        // will have the list of task in the queue
-        this.activeQueue = [];
+        
         // task status change notification callback map
         this.taskChangeCallbackMap = {};
         // task manager's task change notification callback list
@@ -212,21 +229,59 @@ export class JSTaskManager {
     }
 
     watchTask(task, onChange=null, autoStart=false) {
-        // start the stak is the task is not started.
+        
+
+        if(taskList.indexOf(task)>=0) {
+            // do NOT register the same task if it is already in the queue
+            return;
+        } 
+
+        // adding task status notifiers
         task.__onTaskStart__ = this.onTaskStart;
         task.__onTaskPasue__ = this.onTaskPause;
         task.__onTaskResume__ = this.onTaskResume;
         task.__onTaskComplete__ = this.onTaskComplete;
 
+        // adding task specific task change handler
         if(onChange !== null && typeof onChange === "function") {
             this.taskChangeCallbackMap[task.taskId] = onChange;
         }
 
+        // start the task if asked to do so
         autoStart && !task.isStarted && task.start();
 
-        this.activeQueue.push(task);
+        // record the task for manipulation
+        taskList.push(task);
 
+        // notify the outside world about the change in the task manager
         this.notifyChange(null);
+
+        return this;
+    }
+
+    unwatchTask(task) {
+        const index = taskList.indexOf(task);
+        if(index>=0) {
+            // removing task status notifiers
+            task.__onTaskStart__ = null;
+            task.__onTaskPasue__ = null;
+            task.__onTaskResume__ = null;
+            task.__onTaskComplete__ = null;
+
+            // deleting task specific task change handler
+            delete this.taskChangeCallbackMap[task.taskId];
+
+            // remove the task from the record.
+            taskList.splice(index, 1);
+
+             // notify the outside world about the change in the task manager
+            this.notifyChange(null);
+        }
+        return this;
+    }
+
+    get activeQueue() {
+        return [...taskList];
     }
 
     onTaskStart = (task) => {
@@ -246,12 +301,8 @@ export class JSTaskManager {
         if(task && this.taskChangeCallbackMap.hasOwnProperty(task.taskId)) {
             this.taskChangeCallbackMap[task.taskId](task);
         }
-        //this.onChange && this.onChange(task);
+        
         this.onChangeHandlers.forEach(onChange=>onChange(task));
-    }
-
-    unwatchTask(task) {
-        // TODO :: 
     }
 
     discardOnChangeHandler(onChange) {

@@ -5,7 +5,7 @@ import { JSTask, JSTaskManager } from './../js-task-manager';
 class TimerTask extends JSTask {
 
     constructor(onUpdate=null) {
-        super('Timer Task', {isCancellable: true});
+        super('Timer Task');
         this.time = 0;
         this.onUpdate = onUpdate;
     }
@@ -13,6 +13,10 @@ class TimerTask extends JSTask {
     interval = 999; // ~1 sec
 
     intervalID = 0;
+
+    get isCancellable() {
+        return true;
+    }
 
     onStart() {
         this.statTimer();

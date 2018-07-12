@@ -7,13 +7,13 @@ class TaskManagerView extends React.Component {
         super(props);
         this.manager = new JSTaskManager(this.onChange);
         this.state = {
-            activeQueue: [...this.manager.activeQueue]
+            activeQueue: this.manager.activeQueue
         }
     }
 
     onChange = (task) => {
         this.setState({
-            activeQueue: [...this.manager.activeQueue]
+            activeQueue: this.manager.activeQueue
         });
     }
 
