@@ -1,4 +1,9 @@
 const _taskid_ = Symbol('_taskid_');
+const _start_ = Symbol('_start_');
+const _cancel_ = Symbol('_cancel_');
+const _pause_ = Symbol('_pause_');
+const _resume_ = Symbol('_resume_');
+const _complete_ = Symbol('_complete_');
 
 /**
  * 1. all the task should override "onStart()" method
@@ -32,110 +37,19 @@ export class JSTask {
         this.isFinished = false;
         this.isCancelled = false;
 
-        /**
-         * start method will start the task
-         */
-        Object.defineProperty(this, "start", {
-            value: () => {
-                if(!this.isStarted) {
-                    this.isStarted = true;
-                    this.isRunning = this.onStart();
-    
-                    // if the task is started,
-                    // notify the task runner about task started
-                    // a method which is supplied by the task runner
-                    this.isRunning && this.__onTaskStart__ && this.__onTaskStart__();
-                }
-                return this.isRunning;
-            },
-            writable: false
-        });
-
-        /**
-         * cancel() method will cancel the RUNNING task if it is cancellable.
-         */
-        Object.defineProperty(this, "cancel", {
-            value: () => {
-                if (this.isCancellable && !this.isCancelled) {
-                    // callback for resource cleanup by the task
-                    this.isCancelled = this.onCancel();
-                    // if cancelled, then complete the task.
-                    this.isCancelled && this.complete();
-                }
-                return this.isCancelled;
-            },
-            writable: false
-        });
-
-        /**
-         * pause() method will pause a "RUNNING" task.
-         * this method will not have any effect if the task is not started and not running.
-         * 
-         * @returns {bool} returns true if the task is paused or else return false.
-         */
-        Object.defineProperty(this, "pause", {
-            value: () => {
-                if (this.isStarted && this.isRunning) {
-                    // ask the task if it can be paused.
-                    this.isRunning = !this.onPause();
-
-                    // if the task is paused
-                    // notify to the task runner
-                    // a method which is supplied by the task runner
-                    !this.isRunning && this.__onTaskPasue__ && this.__onTaskPasue__(this);
-                }
-                return this.isRunning;
-            },
-            writable: false
-        });
-
-        /**
-         * resume() method will trigger the pasued task to run again.
-         * this method will not have any effect if the task is not yet started.
-         * @return {bool} will return true if the task is resumed or else will return false.
-         */
-        Object.defineProperty(this, "resume", {
-            value: () => {
-
-                // we cannot "resume" a task which is running or cancelled
-                // we can resume a task only when it is started and NOT running and NOT cancelled
-                if (this.isStarted && !this.isRunning && !this.isCancelled) {
-
-                    // ask the task if it can resume.
-                    this.isRunning = this.onResume();
-        
-                    // if the task is resumed,
-                    // notify the task runner about task resume
-                    // a method which is supplied by the task runner
-                    this.isRunning && this.__onTaskResume__ && this.__onTaskResume__(this);
-                }
-                return this.isRunning;
-            },
-            writable: false
-        });
-
-        /**
-         * all task should call this method when the task is completed.
-         */
-        Object.defineProperty(this, "complete", {
-            value: () => {
-                this.isRunning = false;
-                this.isFinished = true;
-        
-                // notify the task runner about the completion of the task
-                // a method which is supplied by the task runner
-                this.__onTaskComplete__ && this.__onTaskComplete__(this);        
-            },
-            writable: false
-        });
-
         JSTaskManager.getInstance().watchTask(this);
     }
 
+    /**
+     * unique id of the task.
+     */
     get taskId() {
         return this[_taskid_];
     }
 
+    /**
+     * @return {string} current status of the task.
+     */
     get status() {
         if(this.isFinished) {
             if(this.isCancelled) {
@@ -155,7 +69,115 @@ export class JSTask {
     }
 
     /**
+     * start method will start the task
+     */
+    get start() {
+        if(!this[_start_]) {
+            this[_start_] = () => {
+                if(!this.isStarted) {
+                    this.isStarted = true;
+                    this.isRunning = this.onStart();
+    
+                    // if the task is started,
+                    // notify the task runner about task started
+                    // a method which is supplied by the task runner
+                    this.isRunning && this.__onTaskStart__ && this.__onTaskStart__();
+                }
+                return this.isRunning;
+            };
+        }
+        return this[_start_];
+    }
+    
+    /**
+     * cancel() method will cancel the RUNNING task if it is cancellable.
+     */
+    get cancel() {
+        if(!this[_cancel_]) {
+            this[_cancel_] = () => {
+                if (this.isCancellable && !this.isCancelled) {
+                    // callback for resource cleanup by the task
+                    this.isCancelled = this.onCancel();
+                    // if cancelled, then complete the task.
+                    this.isCancelled && this.complete();
+                }
+                return this.isCancelled;
+            };
+        }
+        return this[_cancel_];
+    }
+
+    /**
+     * pause() method will pause a "RUNNING" task.
+     * this method will not have any effect if the task is not started and not running.
+     * 
+     * @returns {bool} returns true if the task is paused or else return false.
+     */
+    get pause() {
+        if(!this[_pause_]) {
+            this[_pause_] = () => {
+                if (this.isStarted && this.isRunning) {
+                    // ask the task if it can be paused.
+                    this.isRunning = !this.onPause();
+
+                    // if the task is paused
+                    // notify to the task runner
+                    // a method which is supplied by the task runner
+                    !this.isRunning && this.__onTaskPasue__ && this.__onTaskPasue__(this);
+                }
+                return this.isRunning;
+            };
+        }
+        return this[_pause_];
+    }
+
+    /**
+     * resume() method will trigger the pasued task to run again.
+     * this method will not have any effect if the task is not yet started.
+     * @return {bool} will return true if the task is resumed or else will return false.
+     */
+    get resume() {
+        if(!this[_resume_]) {
+            this[_resume_] = () => {
+
+                // we cannot "resume" a task which is running or cancelled
+                // we can resume a task only when it is started and NOT running and NOT cancelled
+                if (this.isStarted && !this.isRunning && !this.isCancelled) {
+
+                    // ask the task if it can resume.
+                    this.isRunning = this.onResume();
+        
+                    // if the task is resumed,
+                    // notify the task runner about task resume
+                    // a method which is supplied by the task runner
+                    this.isRunning && this.__onTaskResume__ && this.__onTaskResume__(this);
+                }
+                return this.isRunning;
+            };
+        }
+        return this[_resume_];
+    }
+
+    /**
+     * all task should call this method when the task is completed.
+     */
+    get complete() {
+        if(!this[_complete_]) {
+            this[_complete_] = () => {
+                this.isRunning = false;
+                this.isFinished = true;
+        
+                // notify the task runner about the completion of the task
+                // a method which is supplied by the task runner
+                this.__onTaskComplete__ && this.__onTaskComplete__(this);        
+            };
+        }
+        return this[_complete_];
+    }
+
+    /**
      * derived classes should override this getter to let the outside world know wethere it is cancellable or not.
+     * @default false
      */
     get isCancellable() {
         return false;
@@ -236,8 +258,11 @@ export class JSTaskManager {
 
     watchTask(task, onChange=null, autoStart=false) {
         
-
         if(taskList.indexOf(task)>=0) {
+
+            // adding task specific task onchange handler
+            this.addTaskSpecificOnChangeCallback(task, onChange);
+
             // do NOT register the same task if it is already in the queue
             return;
         } 
@@ -249,9 +274,7 @@ export class JSTaskManager {
         task.__onTaskComplete__ = this.onTaskComplete;
 
         // adding task specific task change handler
-        if(onChange !== null && typeof onChange === "function") {
-            this.taskChangeCallbackMap[task.taskId] = onChange;
-        }
+        this.addTaskSpecificOnChangeCallback(task, onChange);
 
         // start the task if asked to do so
         autoStart && !task.isStarted && task.start();
@@ -286,6 +309,15 @@ export class JSTaskManager {
         return this;
     }
 
+    addTaskSpecificOnChangeCallback(task, onChange) {
+        if(onChange !== null && typeof onChange === "function") {
+            let arr = this.taskChangeCallbackMap[task.taskId] || [];
+            arr.push(onChange);
+            this.taskChangeCallbackMap[task.taskId] = arr;
+        }
+    }
+
+
     get activeQueue() {
         return [...taskList];
     }
@@ -309,7 +341,7 @@ export class JSTaskManager {
      */
     notifyChange(task=null) {
         if(task && this.taskChangeCallbackMap.hasOwnProperty(task.taskId)) {
-            this.taskChangeCallbackMap[task.taskId](task);
+            this.taskChangeCallbackMap[task.taskId].forEach(cb=>cb(task));
         }
         
         this.onChangeHandlers.forEach(onChange=>onChange(task));
