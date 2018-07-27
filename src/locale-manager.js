@@ -1,30 +1,28 @@
-import $ from 'jquery';
-
 const defaultLocale = 'en_US';
 
-const localeMap = {};
+export const localeMap = {};
 
-let localeManagerInstance;
+var instance = null;
 
 /**
- * locale manager util class to load and server localization content.
+ * resource manager
  */
-export class JSLocaleManager {
+export class LocaleManager {
 
-    static getInstance(sourcePath = null, locale = null) {
-
-        sourcePath && (localeManagerInstance.sourcePath = sourcePath);
-
-        locale && (localeManagerInstance.currentLocale = locale);
-
-        return localeManagerInstance;
+    static getInstance() {
+        return instance || new LocaleManager();
     }
 
     constructor() {
-        if (localeManagerInstance) {
-            throw new Error('Singeltone error');
+        if (instance) {
+            return instance;
         }
+        instance = this;
     }
+
+    sourcePath = 'locale';
+
+    currentLocale = 'en_US';
 
     /**
      * initiate the bundle loading for the given locale.
@@ -33,28 +31,29 @@ export class JSLocaleManager {
      * @param {function} callback callback function once the loading is complete
      * @param {string} locale locale name
      */
-    load(bundleName, callback, locale = 'en_US') {
+    load(bundleName, callback=null, locale = 'en_US') {
         if (this.hasBundle(bundleName, locale)) {
-            callback(true);
+            let bundle = this.getBundle(bundleName, locale);
+            callback && callback(true, bundle);
+            return bundle;
         } else {
             let url = [this.sourcePath, locale, bundleName].join('/') + '.properties?ts=' + Date.now();
-            $.ajax({
-                url: url,
-                data: {},
-                type: 'get',
-                dataType: 'text',
-                mimeType: 'text/plain',
-                success: (data, textStatus, jqXHR) => {
-                    let map = this.parse(data);
+
+            return fetch(url)
+                .then(response => response.text())
+                .then(textContent => {
+                    let map = this.parse(textContent);
+                    console.debug(bundleName, locale, map);
                     if (!localeMap.hasOwnProperty(locale)) {
                         localeMap[locale] = {};
                     }
                     localeMap[locale][bundleName] = map;
-                    callback(true)
-                }
-            }).fail(function (jqXHR, status, error) {
-                callback(false, error);
-            });
+                    callback && callback(true, map)
+                    return map;
+                }).catch(error => {
+                    callback && callback(false, error);
+                    return error;
+                });
         }
     }
 
@@ -85,7 +84,7 @@ export class JSLocaleManager {
             return localeMap[locale][bundleName];
         }
         if (this.hasBundle(bundleName, defaultLocale)) {
-            return localeMap[locale][bundleName]; // fallback bundle
+            return localeMap[defaultLocale][bundleName]; // fallback bundle
         }
         return {}; // do we need to return "null" here?
     }
@@ -121,14 +120,11 @@ export class JSLocaleManager {
             params && params.forEach((param, index) => {
                 val = val.replace(new RegExp('\\{' + index + '\\}', 'g'), param);
             });
+            val = val.replace(/{\d+}/g, ''); // removes the unsupplied param index
             value[index] = val;
         });
         return value;
     }
-
-    sourcePath = 'locale';
-
-    currentLocale = 'en_US';
 
     parse(src) {
         var obj = {}
@@ -158,17 +154,18 @@ export class JSLocaleManager {
                     value = value.replace(/(['"])$/, '').trim();
                 }
 
+
                 value = value.replace(/(\\")/g, '"').trim();
                 value = value.replace(/(\\')/g, "'").trim();
 
+
+
                 obj[key] = value
             }
-        });
+        })
 
         return obj
     }
 }
 
-localeManagerInstance = new JSLocaleManager();
-
-export default JSLocaleManager;
+export default LocaleManager;
