@@ -98,3 +98,74 @@ it('checking the unsubsribe () functionality', () => {
 
     //expect(new EventPool()).toThrow({});
 });
+
+//1. send event , callback as invalid, check returns false
+it('checking the invalid event , callback to unwatch(\'event\') Should return false', () => {
+    EventPool.watch('a1', cb1);
+    EventPool.watch('a2', cb2);
+
+    // event , callback as invalid
+    let watchStatus = EventPool.unwatch('' , cb3 );
+
+    expect(watchStatus).toBeFalsy();
+});
+
+
+//2. send unwatched event, to check returns false
+it('checking the unwatched event, callaback to unwatch(\'event\') should return false', () => {
+    EventPool.watch('a1', cb1);
+    EventPool.watch('a2', cb2);
+
+    // event , callback as invalid
+    let watchStatus = EventPool.unwatch('a3' , cb3 );
+
+    expect(watchStatus).toBeFalsy();
+});
+
+
+//3. send watched event , callback eventpool to unwatch, check returns true
+it('checking the watched event, callaback to unwatch(\'event\') should returns true', () => {
+    EventPool.watch('a1', cb1);
+    EventPool.watch('a2', cb2);
+
+    // event , callback as invalid
+    let watchStatus = EventPool.unwatch('a1' , cb1 );
+
+    expect(watchStatus).toBeTruthy();
+});
+
+
+//4. send unwatched initiator, check if it returns false
+it('checking the not valid initiator to unwatch(\'event\') should return false', () => {
+    EventPool.watch('a1', cb1, 0, "initiator1");
+    EventPool.watch('a2', cb2);
+
+    // event , callback as invalid
+    let watchStatus = EventPool.unwatch('a1' , cb1 , "notvalidinitiator" );
+
+    expect(watchStatus).toBeFalsy();
+});
+
+
+//5. send event, callback , initiator check if it returns true
+it('checking the watched initiator to unwatch(\'event\') should return true', () => {
+    EventPool.watch('a1', cb1, 0, "initiator1");
+    EventPool.watch('a2', cb2);
+
+    // event , callback as invalid
+    let watchStatus = EventPool.unwatch('a1' , cb1 , "initiator1" );
+
+    expect(watchStatus).toBeTruthy();
+});
+
+//5. send event, callback , initiator check if it returns true
+it('checking the watched initiator to unwatch(\'event\') should return true & object check', () => {
+    EventPool.watch('a1', cb1, 0, "initiator1");
+    EventPool.watch('a1', cb1);
+
+    // event , callback as valid
+    let watchStatus = EventPool.unwatch('a1' , cb1);
+
+    expect(map['a1']).toMatchObject([new EventPod('a1', cb1, 0, "initiator1")]);
+
+});

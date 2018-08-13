@@ -119,6 +119,10 @@ export class EventPool {
         };
     }
 
+    /**
+     * @param {string} event name if the event to dropped from watching.
+     * NOTE: if no event is passed or null is passed all the "watch's" will dropped.
+     */
     static dropAll(event = null) {
         if (event) {
             // drop all the watch's only of the given event
@@ -129,6 +133,37 @@ export class EventPool {
                 delete map[event];
             });
         }
+    }
+
+     /**
+     * method to un-watch the event.
+     * 
+     * @param {string} event event name
+     * @param {function} callback function which is called when the event is fired
+     * @param {any} initiator initiator of the event. can be string or object or any.
+     */
+    static unwatch(event, callback, initiator = null) {
+        if (!event || !callback) {
+            // event or callback is invalid. drop the un-watch request
+            return false;
+        }
+        if (map.hasOwnProperty(event) === false) {
+            // nothing is mapped to the event
+            return false;
+        }
+        
+        let pool = map[event];
+        // callback & initiator is valid,remove from the pods.
+        let pods = pool.filter(pod => (pod.callback === callback && pod.initiator === initiator));
+        if (pods.length > 0) {
+            // removing selected pod from pool
+            pods.forEach(pod=>{
+                pool.splice(pool.indexOf(pod), 1);
+            });
+            return true;
+        }
+        // initiator is invaid, return false
+        return false;
     }
 }
 
