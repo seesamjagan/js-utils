@@ -31,7 +31,7 @@ export class LocaleManager {
      * @param {function} callback callback function once the loading is complete
      * @param {string} locale locale name
      */
-    load(bundleName, callback=null, locale = 'en_US') {
+    load(bundleName, callback = null, locale = 'en_US') {
         if (this.hasBundle(bundleName, locale)) {
             let bundle = this.getBundle(bundleName, locale);
             callback && callback(true, bundle);
@@ -39,11 +39,23 @@ export class LocaleManager {
         } else {
             let url = [this.sourcePath, locale, bundleName].join('/') + '.properties?ts=' + Date.now();
 
-            return fetch(url)
-                .then(response => response.text())
-                .then(textContent => {
+            const  OCTET_STREAM = 'application/octet-stream';
+            return fetch(url, {
+                mode: "cors",
+                headers: {
+                    'Content-Type': OCTET_STREAM
+                }
+            }).then(response => {
+                let contentType = response.headers.get('Content-Type');
+                // const TEXT = 'text/plain';
+                const HTML = 'text/html';
+
+                if (contentType && contentType.indexOf(HTML) >= 0) {
+                    throw new Error('Received unexpected "Content-Type" (%s) in response header for the bundle ' + bundleName, contentType);
+                }
+                return response.text();
+            }).then(textContent => {
                     let map = this.parse(textContent);
-                    console.debug(bundleName, locale, map);
                     if (!localeMap.hasOwnProperty(locale)) {
                         localeMap[locale] = {};
                     }
